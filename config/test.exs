@@ -2,7 +2,7 @@ import Config
 
 # Test-specific configuration
 config :api_framework_elixir, :test,
-  base_url: System.get_env("BASEURL") || "http://localhost:3001",
+  base_url: System.get_env("BASEURL") || "http://192.168.1.8:3001",
   username: System.get_env("USER"),
   password: System.get_env("PASSWORD")
 

@@ -8,7 +8,7 @@ defmodule ApiFrameworkElixir.PatchBookingTest do
   alias ApiFrameworkElixir.Services.BookingService
   alias ApiFrameworkElixir.TestUtils
 
-  setup do
+  setup_all do
     # Authenticate before each test
     try do
       auth_headers = ApiFrameworkElixir.ServiceBase.authenticate()

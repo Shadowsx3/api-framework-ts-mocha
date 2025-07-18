@@ -65,7 +65,7 @@ cp example.env .env
 
 The framework uses environment variables for configuration:
 
-- `BASEURL`: API base URL (defaults to http://localhost:3001)
+- `BASEURL`: API base URL (defaults to http://192.168.1.8:3001)
 - `API_USER`: API username (defaults to "admin")
 - `API_PASSWORD`: API password (defaults to "password123")
     

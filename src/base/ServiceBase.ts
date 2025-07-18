@@ -21,7 +21,7 @@ export class ServiceBase {
   }
 
   async authenticate(): Promise<void> {
-    const username = process.env["USERNAME"];
+    const username = process.env["USER"];
     const password = process.env["PASSWORD"];
 
     if (!username || !password) {
@@ -41,6 +41,7 @@ export class ServiceBase {
       username,
       password,
     };
+    console.log("Authenticating with credentials:", credentials);
     const response = await this.post<SessionResponse>(`${this.baseUrl}/auth`, credentials);
 
     SessionManager.storeToken(username, password, response.data.token);

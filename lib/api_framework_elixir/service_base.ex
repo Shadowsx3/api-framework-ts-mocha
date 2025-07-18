@@ -12,7 +12,7 @@ defmodule ApiFrameworkElixir.ServiceBase do
   def base_url do
     Application.get_env(:api_framework_elixir, :base_url) ||
       System.get_env("BASEURL") ||
-      "http://localhost:3001"
+      "http://192.168.1.8:3001"
   end
 
   @doc """

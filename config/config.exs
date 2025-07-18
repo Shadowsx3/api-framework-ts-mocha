@@ -2,7 +2,7 @@ import Config
 
 # Configure the main application
 config :api_framework_elixir,
-  base_url: System.get_env("BASEURL") || "http://localhost:3001",
+  base_url: System.get_env("BASEURL") || "http://192.168.1.8:3001",
   username: System.get_env("API_USER") || "admin",
   password: System.get_env("API_PASSWORD") || "password123"
 
@@ -17,7 +17,7 @@ config :jason,
 
 # Configure test environment
 config :api_framework_elixir, :test,
-  base_url: System.get_env("BASEURL") || "http://localhost:3001",
+  base_url: System.get_env("BASEURL") || "http://192.168.1.8:3001",
   username: System.get_env("API_USER") || "admin",
   password: System.get_env("API_PASSWORD") || "password123"
 

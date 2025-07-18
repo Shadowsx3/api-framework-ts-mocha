@@ -8,7 +8,7 @@ defmodule ApiFrameworkElixir.DeleteBookingTest do
   alias ApiFrameworkElixir.Services.BookingService
   alias ApiFrameworkElixir.TestUtils
 
-  setup do
+  setup_all do
     # Authenticate before each test
     try do
       auth_headers = ApiFrameworkElixir.ServiceBase.authenticate()
@@ -50,28 +50,31 @@ defmodule ApiFrameworkElixir.DeleteBookingTest do
     end
   end
 
-  @moduletag :smoke
   Enum.each(1..100, fn i ->
-    test "delete booking successfully (run #{i})", %{
-      booking_id: booking_id,
-      auth_headers: auth_headers
-    } do
-      case BookingService.delete_booking(booking_id, auth_headers) do
-        {:ok, response} ->
-          # According to API documentation, delete returns 201 Created
-          assert response.status == 201
+    defmodule DeleteBookingTest do
+      use ExUnit.Case, async: true
 
-          # Verify the booking is deleted
-          case BookingService.get_booking(booking_id) do
-            {:ok, get_response} ->
-              assert get_response.status == 404
+      test "delete booking successfully", %{
+        booking_id: booking_id,
+        auth_headers: auth_headers
+      } do
+        case BookingService.delete_booking(booking_id, auth_headers) do
+          {:ok, response} ->
+            # According to API documentation, delete returns 201 Created
+            assert response.status == 201
 
-            {:error, reason} ->
-              flunk("Get booking after delete failed: #{inspect(reason)}")
-          end
+            # Verify the booking is deleted
+            case BookingService.get_booking(booking_id) do
+              {:ok, get_response} ->
+                assert get_response.status == 404
 
-        {:error, reason} ->
-          flunk("Delete booking failed: #{inspect(reason)}")
+              {:error, reason} ->
+                flunk("Get booking after delete failed: #{inspect(reason)}")
+            end
+
+          {:error, reason} ->
+            flunk("Delete booking failed: #{inspect(reason)}")
+        end
       end
     end
   end)
