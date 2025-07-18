@@ -50,35 +50,6 @@ defmodule ApiFrameworkElixir.DeleteBookingTest do
     end
   end
 
-  Enum.each(1..100, fn i ->
-    defmodule DeleteBookingTest do
-      use ExUnit.Case, async: true
-
-      test "delete booking successfully", %{
-        booking_id: booking_id,
-        auth_headers: auth_headers
-      } do
-        case BookingService.delete_booking(booking_id, auth_headers) do
-          {:ok, response} ->
-            # According to API documentation, delete returns 201 Created
-            assert response.status == 201
-
-            # Verify the booking is deleted
-            case BookingService.get_booking(booking_id) do
-              {:ok, get_response} ->
-                assert get_response.status == 404
-
-              {:error, reason} ->
-                flunk("Get booking after delete failed: #{inspect(reason)}")
-            end
-
-          {:error, reason} ->
-            flunk("Delete booking failed: #{inspect(reason)}")
-        end
-      end
-    end
-  end)
-
   @moduletag :regression
   test "delete booking response time less than 1000ms", %{
     booking_id: booking_id,
@@ -136,6 +107,77 @@ defmodule ApiFrameworkElixir.DeleteBookingTest do
 
       {:error, reason} ->
         flunk("Delete booking failed: #{inspect(reason)}")
+    end
+  end
+end
+
+# Dynamically generate 100 modules with the same test, but unique module names
+for i <- 1..100 do
+  mod = Module.concat([ApiFrameworkElixir, String.to_atom("DeleteBookingTest#{i}")])
+
+  defmodule mod do
+    use ExUnit.Case, async: true
+    alias ApiFrameworkElixir.Services.BookingService
+    alias ApiFrameworkElixir.TestUtils
+
+    setup_all do
+      try do
+        auth_headers = ApiFrameworkElixir.ServiceBase.authenticate()
+        {:ok, auth_headers: auth_headers}
+      rescue
+        e ->
+          flunk("Authentication failed: #{inspect(e)}")
+      end
+    end
+
+    setup do
+      booking_data =
+        TestUtils.sample_booking(%{
+          firstname: "John",
+          lastname: "Snow",
+          totalprice: 1000,
+          depositpaid: true,
+          bookingdates: %{
+            checkin: "2024-01-01",
+            checkout: "2024-02-01"
+          },
+          additionalneeds: "Breakfast"
+        })
+
+      case BookingService.add_booking(booking_data) do
+        {:ok, create_result} when is_map(create_result.data) ->
+          booking_id = create_result.data["bookingid"]
+          {:ok, booking_id: booking_id}
+
+        {:ok, response} when response.status == 418 ->
+          flunk("API temporarily unavailable (418)")
+
+        {:ok, response} ->
+          flunk("Create booking failed, got: #{inspect(response)}")
+
+        {:error, reason} ->
+          flunk("Create booking failed: #{inspect(reason)}")
+      end
+    end
+
+    test "delete booking successfully", %{booking_id: booking_id, auth_headers: auth_headers} do
+      case BookingService.delete_booking(booking_id, auth_headers) do
+        {:ok, response} ->
+          # According to API documentation, delete returns 201 Created
+          assert response.status == 201
+
+          # Verify the booking is deleted
+          case BookingService.get_booking(booking_id) do
+            {:ok, get_response} ->
+              assert get_response.status == 404
+
+            {:error, reason} ->
+              flunk("Get booking after delete failed: #{inspect(reason)}")
+          end
+
+        {:error, reason} ->
+          flunk("Delete booking failed: #{inspect(reason)}")
+      end
     end
   end
 end
