@@ -21,7 +21,7 @@ export class ServiceBase {
   }
 
   async authenticate(): Promise<void> {
-    const username = process.env["USER"];
+    const username = process.env["USERNAME"];
     const password = process.env["PASSWORD"];
 
     if (!username || !password) {

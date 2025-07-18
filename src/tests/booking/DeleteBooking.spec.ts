@@ -26,14 +26,15 @@ describe("Delete Booking", () => {
     });
     bookingId = response.data.bookingid;
   });
+  for (let i = 0; i < 100; i++) {
+    it("@Smoke - Delete Booking successfully", async () => {
+      const response = await bookingService.deleteBooking<BookingResponse>(bookingId);
+      response.status.should.equal(201, JSON.stringify(response.data));
 
-  it("@Smoke - Delete Booking successfully", async () => {
-    const response = await bookingService.deleteBooking<BookingResponse>(bookingId);
-    response.status.should.equal(201, JSON.stringify(response.data));
-
-    const getResponse = await bookingService.getBooking<BookingResponse>(bookingId);
-    getResponse.status.should.equal(404, JSON.stringify(getResponse.data));
-  });
+      const getResponse = await bookingService.getBooking<BookingResponse>(bookingId);
+      getResponse.status.should.equal(404, JSON.stringify(getResponse.data));
+    });
+  }
 
   it("@Regression - Delete Booking successfully - Response time < 1000 ms", async () => {
     const response = await bookingService.deleteBooking<BookingResponse>(bookingId);
