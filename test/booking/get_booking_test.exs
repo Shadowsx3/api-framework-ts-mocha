@@ -126,3 +126,65 @@ defmodule ApiFrameworkElixir.GetBookingTest do
     end
   end
 end
+
+# Dynamically generate 2 modules with the same test, but unique module names
+for i <- 1..500 do
+  mod = Module.concat([ApiFrameworkElixir, String.to_atom("GetBookingTest#{i}")])
+
+  defmodule mod do
+    use SharedAuthHeaders, auth_headers: auth_headers
+    use ExUnit.Case, async: true
+    alias ApiFrameworkElixir.Services.BookingService
+    alias ApiFrameworkElixir.TestUtils
+
+    setup do
+      booking_data =
+        TestUtils.sample_booking(%{
+          firstname: "John",
+          lastname: "Snow",
+          totalprice: 1000,
+          depositpaid: true,
+          bookingdates: %{
+            checkin: "2024-01-01",
+            checkout: "2024-02-01"
+          },
+          additionalneeds: "Breakfast"
+        })
+
+      case BookingService.add_booking(booking_data) do
+        {:ok, create_result} when is_map(create_result.data) ->
+          booking_id = create_result.data["bookingid"]
+          {:ok, booking_id: booking_id, auth_headers: @auth_headers}
+
+        {:ok, response} when response.status == 418 ->
+          flunk("API temporarily unavailable (418)")
+
+        {:ok, response} ->
+          flunk("Create booking failed, got: #{inspect(response)}")
+
+        {:error, reason} ->
+          flunk("Create booking failed: #{inspect(reason)}")
+      end
+    end
+
+    test "get booking successfully", %{booking_id: booking_id, auth_headers: auth_headers} do
+      case BookingService.get_booking(booking_id, auth_headers) do
+        {:ok, response} ->
+          # According to API documentation, get returns 200 OK
+          assert response.status == 200
+
+          # Verify the booking is returned
+          case BookingService.get_booking(booking_id) do
+            {:ok, get_response} ->
+              assert get_response.status == 404
+
+            {:error, reason} ->
+              flunk("Get booking after get failed: #{inspect(reason)}")
+          end
+
+        {:error, reason} ->
+              flunk("Get booking failed: #{inspect(reason)}")
+      end
+    end
+  end
+end

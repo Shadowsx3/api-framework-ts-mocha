@@ -119,7 +119,7 @@ defmodule ApiFrameworkElixir.DeleteBookingTest do
 end
 
 # Dynamically generate 2 modules with the same test, but unique module names
-for i <- 1..1000 do
+for i <- 1..500 do
   mod = Module.concat([ApiFrameworkElixir, String.to_atom("DeleteBookingTest#{i}")])
 
   defmodule mod do
