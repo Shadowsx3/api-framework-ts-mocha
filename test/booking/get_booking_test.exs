@@ -132,7 +132,6 @@ for i <- 1..500 do
   mod = Module.concat([ApiFrameworkElixir, String.to_atom("GetBookingTest#{i}")])
 
   defmodule mod do
-    use SharedAuthHeaders, auth_headers: auth_headers
     use ExUnit.Case, async: true
     alias ApiFrameworkElixir.Services.BookingService
     alias ApiFrameworkElixir.TestUtils
@@ -154,7 +153,7 @@ for i <- 1..500 do
       case BookingService.add_booking(booking_data) do
         {:ok, create_result} when is_map(create_result.data) ->
           booking_id = create_result.data["bookingid"]
-          {:ok, booking_id: booking_id, auth_headers: @auth_headers}
+          {:ok, booking_id: booking_id}
 
         {:ok, response} when response.status == 418 ->
           flunk("API temporarily unavailable (418)")
@@ -167,8 +166,8 @@ for i <- 1..500 do
       end
     end
 
-    test "get booking successfully", %{booking_id: booking_id, auth_headers: auth_headers} do
-      case BookingService.get_booking(booking_id, auth_headers) do
+    test "get booking successfully", %{booking_id: booking_id} do
+      case BookingService.get_booking(booking_id) do
         {:ok, response} ->
           # According to API documentation, get returns 200 OK
           assert response.status == 200
@@ -176,7 +175,7 @@ for i <- 1..500 do
           # Verify the booking is returned
           case BookingService.get_booking(booking_id) do
             {:ok, get_response} ->
-              assert get_response.status == 404
+              assert get_response.status == 200
 
             {:error, reason} ->
               flunk("Get booking after get failed: #{inspect(reason)}")
