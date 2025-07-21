@@ -10,7 +10,6 @@ defmodule Mix.Tasks.DistributedTest do
   """
 
   def run([node1, node2]) do
-    # Ensure both nodes are started and connected
     Node.start(String.to_atom(node1))
     Node.set_cookie(:mysecretcookie)
     Node.connect(String.to_atom(node2))
@@ -23,17 +22,15 @@ defmodule Mix.Tasks.DistributedTest do
 
     # Run on local node
     local = Task.async(fn ->
-      System.cmd("mix", ["test"] ++ files1, into: IO.stream(:stdio, :line))
+      Mix.Tasks.Test.run(files1)
     end)
 
-    # Run on remote node
-    remote = Node.spawn_link(String.to_atom(node2), __MODULE__, :remote_run, [files2])
+    # Run on remote node using :rpc
+    remote = Task.async(fn ->
+      :rpc.call(String.to_atom(node2), Mix.Tasks.Test, :run, [files2])
+    end)
 
     Task.await(local, :infinity)
-    remote
-  end
-
-  def remote_run(files) do
-    System.cmd("mix", ["test"] ++ files, into: IO.stream(:stdio, :line))
+    Task.await(remote, :infinity)
   end
 end
