@@ -25,12 +25,26 @@ defmodule Mix.Tasks.DistributedTest do
       Mix.Tasks.Test.run(files1)
     end)
 
-    # Run on remote node using :rpc
+    # Run on remote node and capture output
     remote = Task.async(fn ->
-      :rpc.call(String.to_atom(node2), Mix.Tasks.Test, :run, [files2])
+      :rpc.call(String.to_atom(node2), __MODULE__, :run_and_capture, [files2])
     end)
 
     Task.await(local, :infinity)
-    Task.await(remote, :infinity)
+    remote_output = Task.await(remote, :infinity)
+    IO.puts("\n===== Remote node output =====\n" <> (remote_output || "<no output>"))
+  end
+
+  def run_and_capture(files) do
+    {:ok, capture_pid} = StringIO.open("")
+    old = Process.group_leader()
+    Process.group_leader(self(), capture_pid)
+    try do
+      Mix.Tasks.Test.run(files)
+      {:ok, output} = StringIO.contents(capture_pid)
+      output
+    after
+      Process.group_leader(self(), old)
+    end
   end
 end
