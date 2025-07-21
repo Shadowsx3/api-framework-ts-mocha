@@ -1,4 +1,22 @@
+defmodule SharedAuthHeaders do
+  defmacro __using__(opts) do
+    quote do
+      @auth_headers unquote(opts[:auth_headers])
+    end
+  end
+end
+
+# Authenticate once at the top and store the result in a regular variable
+{:ok, auth_headers} =
+  try do
+    {:ok, ApiFrameworkElixir.ServiceBase.authenticate()}
+  rescue
+    e -> raise "Authentication failed: #{inspect(e)}"
+  end
+
+
 defmodule ApiFrameworkElixir.DeleteBookingTest do
+  use SharedAuthHeaders, auth_headers: auth_headers
   @moduledoc """
   Delete booking tests.
   This replaces the TypeScript DeleteBooking.spec.ts file.
@@ -7,17 +25,6 @@ defmodule ApiFrameworkElixir.DeleteBookingTest do
   use ExUnit.Case, async: true
   alias ApiFrameworkElixir.Services.BookingService
   alias ApiFrameworkElixir.TestUtils
-
-  setup_all do
-    # Authenticate before each test
-    try do
-      auth_headers = ApiFrameworkElixir.ServiceBase.authenticate()
-      {:ok, auth_headers: auth_headers}
-    rescue
-      e ->
-        flunk("Authentication failed: #{inspect(e)}")
-    end
-  end
 
   setup do
     # Create a booking for each test
@@ -37,7 +44,7 @@ defmodule ApiFrameworkElixir.DeleteBookingTest do
     case BookingService.add_booking(booking_data) do
       {:ok, create_result} when is_map(create_result.data) ->
         booking_id = create_result.data["bookingid"]
-        {:ok, booking_id: booking_id}
+        {:ok, booking_id: booking_id, auth_headers: @auth_headers}
 
       {:ok, response} when response.status == 418 ->
         flunk("API temporarily unavailable (418)")
@@ -111,24 +118,15 @@ defmodule ApiFrameworkElixir.DeleteBookingTest do
   end
 end
 
-# Dynamically generate 100 modules with the same test, but unique module names
-for i <- 1..100 do
+# Dynamically generate 2 modules with the same test, but unique module names
+for i <- 1..1000 do
   mod = Module.concat([ApiFrameworkElixir, String.to_atom("DeleteBookingTest#{i}")])
 
   defmodule mod do
+    use SharedAuthHeaders, auth_headers: auth_headers
     use ExUnit.Case, async: true
     alias ApiFrameworkElixir.Services.BookingService
     alias ApiFrameworkElixir.TestUtils
-
-    setup_all do
-      try do
-        auth_headers = ApiFrameworkElixir.ServiceBase.authenticate()
-        {:ok, auth_headers: auth_headers}
-      rescue
-        e ->
-          flunk("Authentication failed: #{inspect(e)}")
-      end
-    end
 
     setup do
       booking_data =
@@ -147,7 +145,7 @@ for i <- 1..100 do
       case BookingService.add_booking(booking_data) do
         {:ok, create_result} when is_map(create_result.data) ->
           booking_id = create_result.data["bookingid"]
-          {:ok, booking_id: booking_id}
+          {:ok, booking_id: booking_id, auth_headers: @auth_headers}
 
         {:ok, response} when response.status == 418 ->
           flunk("API temporarily unavailable (418)")
